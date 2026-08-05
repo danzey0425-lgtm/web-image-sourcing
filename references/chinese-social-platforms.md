@@ -61,10 +61,27 @@
 ## Douyin (抖音)
 
 ### Web Access
-- Search results require login ("登录后即可搜索更多精彩视频").
+- Search results require login ("登录后即可搜索更多精彩视频"). **未登录 UIA 树只有 16 个 chrome 元素、页面被登录弹窗遮罩覆盖**；登录后 UIA 树暴涨到 ~286 元素，结果全部可见。
 - Same `launchPersistentContext` approach works for keeping login state.
 - Video cover images appear in search results after login, but resolution is low.
 - 实测补充：抖音短视频封面是高清实拍，适合找施工现场、元素特写（配合真实浏览器截图路线同样适用）。
+
+### 桌面通道实测（2026-08，登录后）⭐
+- **UIA 树形态与小红书不同**：搜索结果卡片**不是 Hyperlink**（13 个 Hyperlink 全是导航：精选/推荐/关注），视频卡片是 **Group 容器**（frame 255×462 左右），标题/作者/时长/点赞是卡片内的 Text 元素。
+- **提取**：抓树后找 Group 元素（每卡片一个，frame 高 ~460 或 ~315，含子 Text 标题）。第一个卡片示例：Group[93] frame=(590,391,255,462)，内含封面 Group[94] + 标题 Text[97] + 作者 Text[100]。
+- **进视频**：click 卡片 Group token → sleep 10s → 地址栏出现 `?modal_id=<视频ID>` 即详情已打开（modal 弹层），标签标题出现"音频正在播放"。
+- **截图 = 高清视频帧**：详情页截图拿到的正在播放的视频帧（有播放进度条/暂停图标/实时互动数），清晰度与小红书笔记截图同级，适合做设计参考。视频帧可能有人物（构图时注意），封面帧/暂停帧均可。
+- **返回**：modal 关闭按钮或浏览器返回。
+- **坑**：搜索结果会混入与主题无关的泛内容（如"藏式庭院"搜出游戏庭院任务教程）——QC 时按主题剔除；部分结果带"图文"标记（非视频），截图同样可用。
+
+## Bilibili (B站)
+
+### 桌面通道实测（2026-08，无需登录）⭐ 最省事平台
+- **无需登录**即可搜索浏览：`https://search.bilibili.com/all?keyword=<URL编码>`（launch_app --new-window 直达）。
+- **UIA 树暴露完整**：~211 元素，**116 个 Hyperlink，其中 ~49 个是视频链接**（value 含 `/video/BV...`），label 含标题+播放量+时长——**与小红书同构，直接用 extract 脚本模式**（正则匹配 `/video/BV` 提取 element_token）。
+- **进视频**：click 卡片 Hyperlink token → 视频页（BV 号）→ 截图（视频首帧/暂停帧 + 标题 + UP 主）。
+- **信息量更大**：B 站不止视频——专栏、动态、图文都能搜；搜索页标题文本区还直接暴露结果标题列表（Text 元素），适合"信息"采集（如施工流程、材料清单、行业讨论）。
+- **坑**：搜索结果混入游戏/无关内容（"庭院"搜出魔兽家宅、游戏任务教程）；标签含"广告"的跳过；播放器 UI 占画面时用暂停帧。
 
 ## When These Platforms Are Worth Using
 - When **authoritative sources** (hotel official sites, architectural media articles) have no photos for niche elements (e.g., water prayer wheels, tree pits, rockery)
